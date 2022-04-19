@@ -1,6 +1,8 @@
 /// <reference types="Cypress" />
 
 describe('Central de Atendimento ao Cliente TAT', function() {
+    const THREE_SECONDS_IN_MS = 3000
+
     this.beforeEach(function() {
         cy.visit('./src/index.html')
     })
@@ -12,6 +14,8 @@ describe('Central de Atendimento ao Cliente TAT', function() {
 
     it('fill mandatory fields and send the form', function() {
         const longText = 'Try type a longtext in the text area, to verify the time spent in the test'
+        cy.clock()
+
         cy.get('#firstName').type('Marcelo')
         cy.get('#lastName').type('Barros')
         cy.get('#email').type('marcelo.barros@teste.com')
@@ -19,9 +23,16 @@ describe('Central de Atendimento ao Cliente TAT', function() {
         cy.contains('button', 'Enviar').click()
 
         cy.get('.success').should('be.visible')
+
+        cy.tick(THREE_SECONDS_IN_MS)
+
+        cy.get('.success').should('not.be.visible')
+
     })
 
     it('display error message when submit form with a invalid format email', function() {
+        cy.clock()
+
         cy.get('#firstName').type('Marcelo')
         cy.get('#lastName').type('Barros')
         cy.get('#email').type('marcelo.barros£teste.com')
@@ -31,31 +42,39 @@ describe('Central de Atendimento ao Cliente TAT', function() {
         cy.get('.error').should('be.visible')
     })
 
-    it('validate that only numbers can be typed at phone field', function() {
-        cy.get('#firstName').type('Marcelo')
-        cy.get('#lastName').type('Barros')
-        cy.get('#email').type('marcelo.barros@teste.com')
-        cy.get('#phone')
-            .type('abcdefgh')
-            .should('have.value', '')
+    Cypress._.times(5, function () {
+        it('validate that only numbers can be typed at phone field', function() {
+            cy.get('#firstName').type('Marcelo')
+            cy.get('#lastName').type('Barros')
+            cy.get('#email').type('marcelo.barros@teste.com')
+            cy.get('#phone')
+                .type('abcdefgh')
+                .should('have.value', '')
+        })
     })
 
-    it('display error message when the phone becomes mandatory, but is not filled before form will be sent', function() {
-        cy.get('#firstName')
-            .type('Marcelo')
-        cy.get('#lastName')
-            .type('Barros')
-        cy.get('#email')
-            .type('marcelo.barros@teste.com')
-        cy.get('#phone-checkbox')
-            .check()
-        cy.get('#open-text-area')
-            .type('teste')
-        cy.contains('button', 'Enviar').click()
-            .click()
+        it('display error message when the phone becomes mandatory, but is not filled before form will be sent', function () {
+            cy.clock()
+            cy.get('#firstName')
+                .type('Marcelo')
+            cy.get('#lastName')
+                .type('Barros')
+            cy.get('#email')
+                .type('marcelo.barros@teste.com')
+            cy.get('#phone-checkbox')
+                .check()
+            cy.get('#open-text-area')
+                .type('teste')
+            cy.contains('button', 'Enviar').click()
+                .click()
 
-        cy.get('.error').should('be.visible')
-    })
+            cy.get('.error').should('be.visible')
+
+            cy.tick(THREE_SECONDS_IN_MS)
+
+            cy.get('.error').should('not.be.visible')
+
+        })
 
     it('fill and clean name, surname, email and phone fields', function() {
         const name = 'Marcelo', surname = 'Barros', email = 'marcelo.barros@teste.com', phone = '987654321'
@@ -85,16 +104,27 @@ describe('Central de Atendimento ao Cliente TAT', function() {
     })
 
     it('display error message when submit form without fill mandatory fields', function() {
+        cy.clock()
         cy.contains('button', 'Enviar').click()
             .click()
 
         cy.get('.error').should('be.visible')
+
+        cy.tick(THREE_SECONDS_IN_MS)
+
+        cy.get('.error').should('not.be.visible')
     })
 
     it('send the form properly using custom command', function() {
+        cy.clock()
+
         cy.fillMandatoryFieldsAndSubmit('Marcelo', 'Barros', 'marcelo.barros@teste.com', '987654321')
 
         cy.get('.success').should('be.visible')
+
+        cy.tick(THREE_SECONDS_IN_MS)
+
+        cy.get('.error').should('not.be.visible')
     })
 
     it('select a product (YouTube) by text', function() {
@@ -179,4 +209,28 @@ describe('Central de Atendimento ao Cliente TAT', function() {
         cy.contains('Talking About Testing').should('be.visible')
     })
 
+    it('show and hide success and error messages using .invoke', function() {
+        cy.get('.success')
+            .should('not.be.visible')
+            .invoke('show')
+            .should('be.visible')
+            .and('contain', 'Mensagem enviada com sucesso.')
+            .invoke('hide')
+            .should('not.be.visible')
+        cy.get('.error')
+            .should('not.be.visible')
+            .invoke('show')
+            .should('be.visible')
+            .and('contain', 'Valide os campos obrigatórios!')
+            .invoke('hide')
+            .should('not.be.visible')
+    })
+
+    it.only('fill text area using invoke command', function () {
+        const longText = Cypress._.repeat('0123456789', 20)
+
+        cy.get('#open-text-area')
+            .invoke('val', longText)
+            .should('have.value', longText)
+    })
 })
