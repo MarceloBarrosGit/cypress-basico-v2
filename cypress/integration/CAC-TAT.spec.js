@@ -42,7 +42,7 @@ describe('Central de Atendimento ao Cliente TAT', function() {
         cy.get('.error').should('be.visible')
     })
 
-    Cypress._.times(5, function () {
+    Cypress._.times(2, function () {
         it('validate that only numbers can be typed at phone field', function() {
             cy.get('#firstName').type('Marcelo')
             cy.get('#lastName').type('Barros')
@@ -232,5 +232,25 @@ describe('Central de Atendimento ao Cliente TAT', function() {
         cy.get('#open-text-area')
             .invoke('val', longText)
             .should('have.value', longText)
+    })
+
+    it('make a HTTP request', function() {
+        cy.request('https://cac-tat.s3.eu-central-1.amazonaws.com/index.html')
+            .should(function(response) {
+                const {status, statusText, body} = response
+                expect(status).to.equal(200)
+                expect(statusText).to.equal('OK')
+                expect(body).to.include('CAC TAT')
+            })
+    })
+
+    it('find hidden cat', function () {
+        cy.get('#cat')
+            .invoke('show')
+            .should('be.visible')
+        cy.get('#title')
+            .invoke('text', 'CAT TAT')
+        cy.get('#subtitle')
+            .invoke('text', 'I 💛 cats!')
     })
 })
